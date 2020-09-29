@@ -4,14 +4,14 @@
 	"description": "A transportation manifet telegram bot",
 	"main": "server.js",
 	"scripts": {
-		"start": "SET NODE_ENV=production & nodemon server.js",
-		"dev": "SET NODE_ENV=development & nodemon server.js",
+		"start": "node server.js",
 		"debug": "ndb server.js"
 	},
 	"author": "Biruk Berhanu",
 	"license": "",
 	"dependencies": {
 		"dotenv": "^8.2.0",
+		"shortid": "^2.2.15",
 		"telegraf": "^3.38.0"
 	}
 }

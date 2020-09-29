@@ -1,0 +1,68 @@
+[
+	{
+		"id": "12345",
+		"name": "leonard Hoftadter",
+		"photo": "",
+		"hodName": "Penny",
+		"hodId": "111",
+		"role": "staff"
+	},
+	{
+		"id": "311770091",
+		"name": "Sheldon Cooper",
+		"photo": "",
+		"hodName": "Amy Farrah Fowler",
+		"hodId": -456164213,
+		"role": "staff"
+	},
+	{
+		"id": "32145",
+		"name": "Howard Walowitz",
+		"photo": "",
+		"hodName": "Bernadette Rostenkowski",
+		"hodId": "741",
+		"role": "staff"
+	},
+	{
+		"id": "56789",
+		"name": "Penny",
+		"gmId": -1001163676779,
+		"photo": "",
+		"staffs": ["leonard Hoftadter"]
+	},
+	{
+		"id": -456164213,
+		"name": "Amy Farrah Fowler",
+		"gmId": -1001163676779,
+		"photo": "",
+		"staffs": ["Sheldon Cooper"]
+	},
+	{
+		"id": "76589",
+		"gmId": -1001163676779,
+		"name": "Bernadette Rostenkowski",
+		"photo": "",
+		"staffs": ["Howard Walowitz"]
+	},
+	{
+		"id": -1001163676779,
+		"name": "Biruk Berhanu",
+		"photo": "",
+		"securityId": -467242713,
+		"capitainId": -430281792,
+		"hods": ["Penny", "Amy Farrah Fowler", "Bernadette Rostenkowski"]
+	},
+	{
+		"id": -430281792,
+		"name": "Raj Koothrappali",
+		"photo": "",
+		"gm": "Biruk Berhanu",
+		"gmId": 1001163676779
+	},
+	{
+		"id": -467242713,
+		"name": "Stuart Bloom",
+		"photo": "",
+		"gm": "Biruk Berhanu"
+	}
+]

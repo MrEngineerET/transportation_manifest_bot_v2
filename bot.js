@@ -25,12 +25,6 @@ const entry_request_button = [
 		},
 		{
 			text: 'Approve Request',
-			callback_data: 'approve_entry_request',
-		},
-	],
-	[
-		{
-			text: 'Forward Request to GM',
 			callback_data: 'forward_request_toGM',
 		},
 	],

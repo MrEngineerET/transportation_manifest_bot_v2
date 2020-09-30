@@ -1,4 +1,3 @@
-const { TIMEOUT } = require('dns')
 const fs = require('fs')
 const path = require('path')
 const shortid = require('shortid')
@@ -37,6 +36,18 @@ const entry_request_button = [
 	],
 ]
 
+const entry_request_button_to_GM = [
+	[
+		{
+			text: 'Reject Request',
+			callback_data: 'reject_request',
+		},
+		{
+			text: 'Approve Request',
+			callback_data: 'approve_request',
+		},
+	],
+]
 bot.action('reject_request', async ctx => {
 	//1) delete the request entry record from entryRequest.json
 	let entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
@@ -57,6 +68,7 @@ bot.action('reject_request', async ctx => {
 	//3) delete the message to signal successful rejection
 	ctx.deleteMessage()
 })
+
 bot.action('approve_request', async ctx => {
 	//1) update the entryRequest.json approved and approvedBy column
 	const sender = await senderInfo(ctx)
@@ -80,7 +92,31 @@ bot.action('approve_request', async ctx => {
 	//3) delete the message to signal successful approval
 	ctx.deleteMessage()
 })
-bot.action('forward_request_toGM', ctx => {})
+
+bot.action('forward_request_toGM', async ctx => {
+	// get sender info to get the id of the GM
+	const sender = await senderInfo(ctx)
+	const gmId = sender.gmId
+	// parse the txt to get the entry request number
+	const entryRequestNo = FindEntryRequestNumber(ctx)
+	// find the name of the requester
+	let entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
+	const entryrequestIndex = entryRequestTable.findIndex(entry => entry.requestNo == entryRequestNo)
+	if (entryrequestIndex != -1) {
+		const requester = entryRequestTable[entryrequestIndex].requestedBy
+		// send the request to the general manager
+		await bot.telegram.sendMessage(
+			gmId,
+			'Entry request from  ' + requester + '\nEntry request No: ' + entryRequestNo,
+			{
+				reply_markup: {
+					inline_keyboard: entry_request_button_to_GM,
+				},
+			}
+		)
+		ctx.deleteMessage()
+	}
+})
 
 bot.command('exit', exitRequest)
 async function exitRequest(ctx) {}

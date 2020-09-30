@@ -4,7 +4,20 @@ const path = require('path')
 const shortid = require('shortid')
 
 const { Telegraf } = require('telegraf')
+const bot = new Telegraf(process.env.BOT_TOKEN)
 
+//debbuging and to get the users chatID
+// bot.use(ctx => {
+// 	console.log(ctx.message)
+// 	console.log('-----------------------------')
+// 	console.log(ctx)
+// })
+//debbuging end
+
+// file path for the entryRequest.json and personal.json files
+const entryRequestTablePath = path.join(__dirname, 'dev_data', 'entryRequest.json')
+const personalTablePath = path.join(__dirname, 'dev_data', 'personal.json')
+// button format for HOD
 const entry_request_button = [
 	[
 		{
@@ -24,19 +37,57 @@ const entry_request_button = [
 	],
 ]
 
-const bot = new Telegraf(process.env.BOT_TOKEN)
-
-bot.command('enter', entryRequest)
+bot.action('reject_request', async ctx => {
+	//1) delete the request entry record from entryRequest.json
+	let entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
+	const entryrequestNumber = FindEntryRequestNumber(ctx)
+	const entryrequestIndex = entryRequestTable.findIndex(
+		entry => entry.requestNo == entryrequestNumber
+	)
+	if (entryrequestIndex != -1) {
+		const record = entryRequestTable[entryrequestIndex]
+		entryRequestTable.splice(entryrequestIndex, 1)
+		fs.writeFileSync(entryRequestTablePath, JSON.stringify(entryRequestTable))
+		//2)send a rejection message to the person who made the request
+		bot.telegram.sendMessage(
+			record.requestedById,
+			'Entry Request No:' + record.requestNo + ' is NOT Approved'
+		)
+	}
+	//3) delete the message to signal successful rejection
+	ctx.deleteMessage()
+})
+bot.action('approve_request', async ctx => {
+	//1) update the entryRequest.json approved and approvedBy column
+	const sender = await senderInfo(ctx)
+	let entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
+	const entryrequestNumber = FindEntryRequestNumber(ctx)
+	const entryrequestIndex = entryRequestTable.findIndex(
+		entry => entry.requestNo == entryrequestNumber
+	)
+	if (entryrequestIndex != -1) {
+		const record = entryRequestTable[entryrequestIndex]
+		entryRequestTable[entryrequestIndex].approved = true
+		entryRequestTable[entryrequestIndex].approvedBy = sender.name
+		entryRequestTable[entryrequestIndex].approvedById = sender.id
+		fs.writeFileSync(entryRequestTablePath, JSON.stringify(entryRequestTable))
+		//2) send an aproval message to teh person who made the request
+		bot.telegram.sendMessage(
+			record.requestedById,
+			'Entry Request No:' + record.requestNo + ' has been Approved'
+		)
+	}
+	//3) delete the message to signal successful approval
+	ctx.deleteMessage()
+})
+bot.action('forward_request_toGM', ctx => {})
 
 bot.command('exit', exitRequest)
-
 async function exitRequest(ctx) {}
 
+bot.command('enter', entryRequest)
 async function entryRequest(ctx) {
 	const sender = await senderInfo(ctx)
-	// debug
-	console.log(sender)
-	// debug end
 	const time = parseTime(ctx)
 	if (time) {
 		// record a request entry in the request entry table
@@ -44,7 +95,7 @@ async function entryRequest(ctx) {
 		// send an entry request to the sender hod
 		await bot.telegram.sendMessage(
 			sender.hodId,
-			'Entry request from Name: ' + sender.name + '\nEntry request No: ' + entryRequestNo,
+			'Entry request from  ' + sender.name + '\nEntry request No: ' + entryRequestNo,
 			{
 				reply_markup: {
 					inline_keyboard: entry_request_button,
@@ -59,22 +110,16 @@ async function entryRequest(ctx) {
 }
 
 async function senderInfo(context) {
-	const senderId = context.update.message.chat.id
-	const personals = JSON.parse(await readFilePro(path.join(__dirname, 'dev_data', 'personal.json')))
+	let senderId = ''
+	if (context.updateType == 'message') {
+		senderId = context.update.message.chat.id
+	} else if (context.updateType == 'callback_query') {
+		senderId = context.update.callback_query.message.chat.id
+	}
+	const personals = JSON.parse(await readFilePro(personalTablePath))
 	const senderIndex = personals.findIndex(p => p.id == senderId)
 	const sender = personals[senderIndex]
 	return sender
-}
-
-function parseTime(context) {
-	const input = context.message.text
-	let time = input.match(/\d{1,2}:\d{1,2} ?(am|pm)/g)
-	if (time) {
-		time = time[0]
-		return time
-	} else {
-		return undefined
-	}
 }
 
 async function createEntryRequest(sender, time) {
@@ -88,16 +133,11 @@ async function createEntryRequest(sender, time) {
 			time,
 		}
 		// open the entry request record table
-		const entryRequestTable = JSON.parse(
-			await readFilePro(path.join(__dirname, 'dev_data', 'entryRequest.json'))
-		)
+		const entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
 		// add the new request record
 		entryRequestTable.push(record)
 		// save the the updated table
-		fs.writeFileSync(
-			path.join(__dirname, 'dev_data', 'entryRequest.json'),
-			JSON.stringify(entryRequestTable)
-		)
+		fs.writeFileSync(entryRequestTablePath, JSON.stringify(entryRequestTable))
 		resolve(requestNo)
 	})
 }
@@ -111,10 +151,21 @@ function readFilePro(path) {
 	})
 }
 
-function parseIDandName(text) {
-	const staffId = /ID:(-?\d+)/g.exec(text)[1]
-	const staffName = /Name: ?(\w+) (\w+)/g.exec(text).slice(1, 3).join(' ')
-	return { staffId, staffName }
+function parseTime(context) {
+	const input = context.message.text
+	let time = input.match(/\d{1,2}:\d{1,2} ?(am|pm)/g)
+	if (time) {
+		time = time[0]
+		return time
+	} else {
+		return undefined
+	}
+}
+
+function FindEntryRequestNumber(context) {
+	const text = context.update.callback_query.message.text
+	const requestNo = /No: ?([\w\d-_]+)/g.exec(text)[1]
+	return requestNo
 }
 
 module.exports = bot

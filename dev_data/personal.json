@@ -2,7 +2,7 @@
 	{
 		"id": "12345",
 		"name": "leonard Hoftadter",
-		"photo": "",
+		"image": "",
 		"hodName": "Penny",
 		"hodId": "111",
 		"role": "staff"
@@ -10,7 +10,7 @@
 	{
 		"id": "311770091",
 		"name": "Sheldon Cooper",
-		"photo": "",
+		"image": "",
 		"hodName": "Amy Farrah Fowler",
 		"hodId": -456164213,
 		"role": "staff"
@@ -18,7 +18,7 @@
 	{
 		"id": "32145",
 		"name": "Howard Walowitz",
-		"photo": "",
+		"image": "",
 		"hodName": "Bernadette Rostenkowski",
 		"hodId": "741",
 		"role": "staff"
@@ -27,42 +27,52 @@
 		"id": "56789",
 		"name": "Penny",
 		"gmId": -1001163676779,
-		"photo": "",
-		"staffs": ["leonard Hoftadter"]
+		"image": "",
+		"staffs": ["leonard Hoftadter"],
+		"securityId": -467242713,
+		"role": "hod"
 	},
 	{
 		"id": -456164213,
 		"name": "Amy Farrah Fowler",
 		"gmId": -1001163676779,
-		"photo": "",
-		"staffs": ["Sheldon Cooper"]
+		"image": "",
+		"staffs": ["Sheldon Cooper"],
+		"securityId": -467242713,
+		"role": "hod"
 	},
 	{
 		"id": "76589",
 		"gmId": -1001163676779,
 		"name": "Bernadette Rostenkowski",
-		"photo": "",
-		"staffs": ["Howard Walowitz"]
+		"image": "",
+		"staffs": ["Howard Walowitz"],
+		"securityId": -467242713,
+		"role": "hod"
 	},
 	{
 		"id": -1001163676779,
 		"name": "Biruk Berhanu",
-		"photo": "",
+		"image": "",
 		"securityId": -467242713,
 		"capitainId": -430281792,
-		"hods": ["Penny", "Amy Farrah Fowler", "Bernadette Rostenkowski"]
+		"hods": ["Penny", "Amy Farrah Fowler", "Bernadette Rostenkowski"],
+		"role": "gm"
 	},
 	{
 		"id": -430281792,
 		"name": "Raj Koothrappali",
-		"photo": "",
+		"image": "",
 		"gm": "Biruk Berhanu",
-		"gmId": 1001163676779
+		"gmId": 1001163676779,
+		"role": "capitain"
 	},
 	{
 		"id": -467242713,
 		"name": "Stuart Bloom",
-		"photo": "",
-		"gm": "Biruk Berhanu"
+		"image": "",
+		"gm": "Biruk Berhanu",
+		"gmId": 1001163676779,
+		"role": "security"
 	}
 ]

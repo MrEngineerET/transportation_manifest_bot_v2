@@ -25,7 +25,7 @@ const entry_request_button = [
 		},
 		{
 			text: 'Approve Request',
-			callback_data: 'approve_request',
+			callback_data: 'approve_entry_request',
 		},
 	],
 	[
@@ -44,23 +44,48 @@ const entry_request_button_to_GM = [
 		},
 		{
 			text: 'Approve Request',
-			callback_data: 'approve_request',
+			callback_data: 'approve_entry_request',
 		},
 	],
 ]
+const security_enter_button = [
+	[
+		{
+			text: 'Enter',
+			callback_data: 'entered_success',
+		},
+	],
+]
+
+bot.action('entered_success', async ctx => {
+	// find out the time this request is made
+	let [hour, minute, second] = new Date().toLocaleTimeString().slice(0, 7).split(':')
+	hour = hour * 1 + 4
+	const time = `${hour}:${minute}`
+	// read entry request table
+	const entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
+	// update the request record by adding arrivalTime
+	const entryRequestNo = FindEntryRequestNumber(ctx)
+	const entryrequestIndex = entryRequestTable.findIndex(
+		record => record.requestNo == entryRequestNo
+	)
+	entryRequestTable[entryrequestIndex].arrivalTime = time
+	// write the new updated table
+	fs.writeFileSync(entryRequestTablePath, JSON.stringify(entryRequestTable))
+	ctx.deleteMessage()
+})
+
 bot.action('reject_request', async ctx => {
 	//1) delete the request entry record from entryRequest.json
 	let entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
-	const entryrequestNumber = FindEntryRequestNumber(ctx)
-	const entryrequestIndex = entryRequestTable.findIndex(
-		entry => entry.requestNo == entryrequestNumber
-	)
+	const entryRequestNo = FindEntryRequestNumber(ctx)
+	const entryrequestIndex = entryRequestTable.findIndex(entry => entry.requestNo == entryRequestNo)
 	if (entryrequestIndex != -1) {
 		const record = entryRequestTable[entryrequestIndex]
 		entryRequestTable.splice(entryrequestIndex, 1)
 		fs.writeFileSync(entryRequestTablePath, JSON.stringify(entryRequestTable))
 		//2)send a rejection message to the person who made the request
-		bot.telegram.sendMessage(
+		await bot.telegram.sendMessage(
 			record.requestedById,
 			'Entry Request No:' + record.requestNo + ' is NOT Approved'
 		)
@@ -69,28 +94,28 @@ bot.action('reject_request', async ctx => {
 	ctx.deleteMessage()
 })
 
-bot.action('approve_request', async ctx => {
+bot.action('approve_entry_request', async ctx => {
 	//1) update the entryRequest.json approved and approvedBy column
 	const sender = await senderInfo(ctx)
 	let entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
-	const entryrequestNumber = FindEntryRequestNumber(ctx)
-	const entryrequestIndex = entryRequestTable.findIndex(
-		entry => entry.requestNo == entryrequestNumber
-	)
+	const entryRequestNo = FindEntryRequestNumber(ctx)
+	const entryrequestIndex = entryRequestTable.findIndex(entry => entry.requestNo == entryRequestNo)
 	if (entryrequestIndex != -1) {
 		const record = entryRequestTable[entryrequestIndex]
 		entryRequestTable[entryrequestIndex].approved = true
 		entryRequestTable[entryrequestIndex].approvedBy = sender.name
 		entryRequestTable[entryrequestIndex].approvedById = sender.id
 		fs.writeFileSync(entryRequestTablePath, JSON.stringify(entryRequestTable))
-		//2) send an aproval message to teh person who made the request
-		bot.telegram.sendMessage(
+		//2) send an approval message to the person who made the request
+		await bot.telegram.sendMessage(
 			record.requestedById,
 			'Entry Request No:' + record.requestNo + ' has been Approved'
 		)
+		//3) delete the message to signal successful approval
+		ctx.deleteMessage()
+		//4) forward a succesful entry pass
+		forwardToSecurity(sender.securityId, entryRequestNo)
 	}
-	//3) delete the message to signal successful approval
-	ctx.deleteMessage()
 })
 
 bot.action('forward_request_toGM', async ctx => {
@@ -117,9 +142,6 @@ bot.action('forward_request_toGM', async ctx => {
 		ctx.deleteMessage()
 	}
 })
-
-bot.command('exit', exitRequest)
-async function exitRequest(ctx) {}
 
 bot.command('enter', entryRequest)
 async function entryRequest(ctx) {
@@ -203,5 +225,46 @@ function FindEntryRequestNumber(context) {
 	const requestNo = /No: ?([\w\d-_]+)/g.exec(text)[1]
 	return requestNo
 }
+
+async function forwardToSecurity(security_id, entryRequestNo) {
+	// read the entryRequest.json file to get the entry request record
+	const entryRequestTable = JSON.parse(await readFilePro(entryRequestTablePath))
+	const entryrequestIndex = entryRequestTable.findIndex(entry => entry.requestNo == entryRequestNo)
+	const record = entryRequestTable[entryrequestIndex]
+
+	// get the photo of the personal
+	const personalTable = JSON.parse(await readFilePro(personalTablePath))
+	const personal = personalTable[personalTable.findIndex(p => p.id == record.requestedById)]
+	const image = personal.image
+	const name = 'Name: ' + personal.name + '\nRequest No: ' + entryRequestNo
+	// send entry pass to security
+	if (image.includes('jpg')) sendMessageWithPhoto(security_id, image, name, security_enter_button)
+	sendMessage(security_id, name, security_enter_button)
+}
+
+async function sendMessage(chat_id, message, btn) {
+	if (!btn) bot.telegram.sendMessage(chat_id, message)
+	else
+		bot.telegram.sendMessage(chat_id, message, {
+			reply_markup: {
+				inline_keyboard: btn,
+			},
+		})
+}
+async function sendMessageWithPhoto(chat_id, photo, caption, btn) {
+	if (!btn)
+		await bot.telegram.sendPhoto(chat_id, photo, {
+			caption: caption,
+		})
+	else
+		await bot.telegram.sendPhoto(chat_id, photo, {
+			caption: caption,
+			reply_markup: {
+				inline_keyboard: btn,
+			},
+		})
+}
+
+bot.command('exit', async ctx => {})
 
 module.exports = bot

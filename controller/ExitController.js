@@ -86,7 +86,7 @@ module.exports = class ExitController {
 /entry \`yyyy/mm/dd hh:mm am/pm\` - to get an entry pass
 /exit \`yyyy/mm/dd hh:mm am/pm\` - 	to get an exit pass
 `
-					this.bot.telegram.sendMessage(ctx.from.id, helpMessage, {
+					this.bot.telegram.sendMessage(ctx.message.chat.id, helpMessage, {
 						parse_mode: 'markdown',
 					})
 				}

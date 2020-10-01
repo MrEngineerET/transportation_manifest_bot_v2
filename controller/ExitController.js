@@ -21,7 +21,48 @@ module.exports = class ExitController {
 				const time = util.parseTime(ctx)
 				if (time) {
 					// record a request exit in the request exit table
-					const exitRequestNo = await createExitRequest(sender, time)
+					const exitRequestNo = await createExitRequest(sender, time, false)
+					// send an exit request to the sender hod
+					await this.bot.telegram.sendMessage(
+						sender.hodId,
+						'Exit request from  ' + sender.name + '\nExit request No: ' + exitRequestNo,
+						{
+							reply_markup: {
+								inline_keyboard: button.exit_request_button,
+							},
+						}
+					)
+					// send an exit request confirmation to the sender
+					ctx.reply(
+						'Exit request has been sent to ' +
+							sender.hodName +
+							'\nExit request No: ' +
+							exitRequestNo
+					)
+				} else {
+					const helpMessage = `
+*Entry/Exit pass Requesting Bot*
+/entry \`yyyy/mm/dd hh:mm am/pm\` - to get an entry pass
+/exit \`yyyy/mm/dd hh:mm am/pm\` - 	to get an exit pass
+`
+					this.bot.telegram.sendMessage(ctx.from.id, helpMessage, {
+						parse_mode: 'markdown',
+					})
+				}
+			} catch (err) {
+				console.log(err)
+			}
+		})
+	}
+
+	exitTransportCommand = function () {
+		this.bot.command('exitT', async ctx => {
+			try {
+				const sender = await util.senderInfo(ctx)
+				const time = util.parseTime(ctx)
+				if (time) {
+					// record a request exit in the request exit table
+					const exitRequestNo = await createExitRequest(sender, time, true)
 					// send an exit request to the sender hod
 					await this.bot.telegram.sendMessage(
 						sender.hodId,
@@ -128,8 +169,9 @@ module.exports = class ExitController {
 					)
 					//3) delete the message to signal successful approval
 					ctx.deleteMessage()
-					//4) forward a succesful exit pass
-					forwardToSecurity(this.bot, sender.securityId, exitRequestNo)
+					//4) forward a succesful exit pass to a security or capitain
+					if (record.transport) forwardToSecurity(this.bot, sender.capitainId, exitRequestNo)
+					else forwardToSecurity(this.bot, sender.securityId, exitRequestNo)
 				}
 			} catch (err) {
 				console.log(err)
@@ -151,7 +193,7 @@ module.exports = class ExitController {
 				const exitRequestIndex = exitRequestTable.findIndex(
 					record => record.requestNo == exitRequestNo
 				)
-				exitRequestTable[exitRequestIndex].arrivalTime = time
+				exitRequestTable[exitRequestIndex].exitedTime = time
 				// write the new updated table
 				fs.writeFileSync(exitRequestTablePath, JSON.stringify(exitRequestTable))
 				ctx.deleteMessage()
@@ -162,7 +204,7 @@ module.exports = class ExitController {
 	}
 }
 
-async function createExitRequest(sender, time) {
+async function createExitRequest(sender, time, transport) {
 	try {
 		return new Promise(async (resolve, reject) => {
 			// create a new exit request record
@@ -172,6 +214,8 @@ async function createExitRequest(sender, time) {
 				requestedBy: sender.name,
 				requestedById: sender.id,
 				time,
+				transport,
+				reported: false,
 			}
 			// open the exit request record table
 			const exitRequestTable = JSON.parse(await util.readFilePro(exitRequestTablePath))

@@ -10,9 +10,9 @@ const ExitController = require('./controller/ExitController')
 
 // debbuging and to get the users chatID
 // bot.use(ctx => {
-// 	console.log(ctx.message)
 // 	console.log('-----------------------------')
-// 	console.log(ctx)
+// 	console.log(ctx.message.chat)
+// 	console.log('-----------------------------')
 // })
 // debbuging end
 
@@ -42,6 +42,7 @@ entryController.enteredSuccessfuly()
 
 exitController = new ExitController(bot)
 exitController.exitCommand()
+exitController.exitTransportCommand()
 exitController.rejectExitRequest()
 exitController.forwardExitRequestToGM()
 exitController.approveExitRequest()

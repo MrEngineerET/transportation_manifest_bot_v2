@@ -171,12 +171,14 @@ async function createEntryRequest(sender, time) {
 	try {
 		return new Promise(async (resolve, reject) => {
 			// create a new entry request record
+			if (!sender) reject(new Error('outside of staff'))
 			requestNo = shortid.generate()
 			const record = {
 				requestNo,
 				requestedBy: sender.name,
 				requestedById: sender.id,
 				time,
+				reported: false,
 			}
 			// open the entry request record table
 			const entryRequestTable = JSON.parse(await util.readFilePro(entryRequestTablePath))

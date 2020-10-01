@@ -5,7 +5,8 @@ const shortid = require('shortid')
 const { Telegraf } = require('telegraf')
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
-const EntryController = require('./controller/entryController')
+const EntryController = require('./controller/EntryController')
+const ExitController = require('./controller/ExitController')
 
 // debbuging and to get the users chatID
 // bot.use(ctx => {
@@ -33,10 +34,17 @@ bot.start(ctx => {
 })
 
 entryController = new EntryController(bot)
-entryController.enteredSuccessfuly()
+entryController.entryCommand()
 entryController.rejectEntryRequest()
-entryController.approveEntryRequest()
 entryController.forwardEntryRequestToGM()
-entryController.enterCommand()
+entryController.approveEntryRequest()
+entryController.enteredSuccessfuly()
+
+exitController = new ExitController(bot)
+exitController.exitCommand()
+exitController.rejectExitRequest()
+exitController.forwardExitRequestToGM()
+exitController.approveExitRequest()
+exitController.exitedSuccessfuly()
 
 module.exports = bot

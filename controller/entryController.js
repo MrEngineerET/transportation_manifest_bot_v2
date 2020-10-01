@@ -13,7 +13,7 @@ module.exports = class EntryContoller {
 	constructor(bot) {
 		this.bot = bot
 	}
-	enterCommand = function () {
+	entryCommand = function () {
 		this.bot.command('entry', async ctx => {
 			try {
 				const sender = await util.senderInfo(ctx)
@@ -54,30 +54,6 @@ module.exports = class EntryContoller {
 		})
 	}
 
-	enteredSuccessfuly = function () {
-		this.bot.action('entered_success', async ctx => {
-			try {
-				// find out the time this request is made
-				let [hour, minute] = new Date().toLocaleTimeString().slice(0, 7).split(':')
-				hour = hour * 1 + 4
-				const time = `${hour}:${minute}`
-				// read entry request table
-				const entryRequestTable = JSON.parse(await util.readFilePro(entryRequestTablePath))
-				// update the request record by adding arrivalTime
-				const entryRequestNo = util.parseForRequestNo(ctx)
-				const entryrequestIndex = entryRequestTable.findIndex(
-					record => record.requestNo == entryRequestNo
-				)
-				entryRequestTable[entryrequestIndex].arrivalTime = time
-				// write the new updated table
-				fs.writeFileSync(entryRequestTablePath, JSON.stringify(entryRequestTable))
-				ctx.deleteMessage()
-			} catch (err) {
-				console.log(err)
-			}
-		})
-	}
-
 	rejectEntryRequest = function () {
 		this.bot.action('reject_entry_request', async ctx => {
 			try {
@@ -95,6 +71,39 @@ module.exports = class EntryContoller {
 				)
 				//3) delete the message to signal completion
 				ctx.deleteMessage()
+			} catch (err) {
+				console.log(err)
+			}
+		})
+	}
+	forwardEntryRequestToGM = function () {
+		this.bot.action('forward_entry_request_toGM', async ctx => {
+			try {
+				// get sender info to get the id of the GM
+				const sender = await util.senderInfo(ctx)
+				const gmId = sender.gmId
+				// parse the txt to get the entry request number
+				const entryRequestNo = util.parseForRequestNo(ctx)
+				// find the name of the requester
+				let entryRequestTable = JSON.parse(await util.readFilePro(entryRequestTablePath))
+				const entryrequestIndex = entryRequestTable.findIndex(
+					entry => entry.requestNo == entryRequestNo
+				)
+				if (entryrequestIndex != -1) {
+					const requester = entryRequestTable[entryrequestIndex].requestedBy
+					// send the request to the general manager
+					await this.bot.telegram.sendMessage(
+						gmId,
+						'Entry request from  ' + requester + '\nEntry request No: ' + entryRequestNo,
+						{
+							reply_markup: {
+								inline_keyboard: button.entry_request_button_to_GM,
+							},
+						}
+					)
+					// signaling successful completion
+					ctx.deleteMessage()
+				}
 			} catch (err) {
 				console.log(err)
 			}
@@ -133,34 +142,24 @@ module.exports = class EntryContoller {
 		})
 	}
 
-	forwardEntryRequestToGM = function () {
-		this.bot.action('forward_request_toGM', async ctx => {
+	enteredSuccessfuly = function () {
+		this.bot.action('entred_successfuly', async ctx => {
 			try {
-				// get sender info to get the id of the GM
-				const sender = await util.senderInfo(ctx)
-				const gmId = sender.gmId
-				// parse the txt to get the entry request number
+				// find out the time this request is made
+				let [hour, minute] = new Date().toLocaleTimeString().slice(0, 7).split(':')
+				hour = hour * 1 + 4
+				const time = `${hour}:${minute}`
+				// read entry request table
+				const entryRequestTable = JSON.parse(await util.readFilePro(entryRequestTablePath))
+				// update the request record by adding arrivalTime
 				const entryRequestNo = util.parseForRequestNo(ctx)
-				// find the name of the requester
-				let entryRequestTable = JSON.parse(await util.readFilePro(entryRequestTablePath))
 				const entryrequestIndex = entryRequestTable.findIndex(
-					entry => entry.requestNo == entryRequestNo
+					record => record.requestNo == entryRequestNo
 				)
-				if (entryrequestIndex != -1) {
-					const requester = entryRequestTable[entryrequestIndex].requestedBy
-					// send the request to the general manager
-					await this.bot.telegram.sendMessage(
-						gmId,
-						'Entry request from  ' + requester + '\nEntry request No: ' + entryRequestNo,
-						{
-							reply_markup: {
-								inline_keyboard: button.entry_request_button_to_GM,
-							},
-						}
-					)
-					// signaling successful completion
-					ctx.deleteMessage()
-				}
+				entryRequestTable[entryrequestIndex].arrivalTime = time
+				// write the new updated table
+				fs.writeFileSync(entryRequestTablePath, JSON.stringify(entryRequestTable))
+				ctx.deleteMessage()
 			} catch (err) {
 				console.log(err)
 			}
@@ -204,11 +203,11 @@ async function forwardToSecurity(bot, security_id, entryRequestNo) {
 		const personalTable = JSON.parse(await util.readFilePro(personalTablePath))
 		const personal = personalTable[personalTable.findIndex(p => p.id == record.requestedById)]
 		const image = personal.image
-		const name = 'Name: ' + personal.name + '\nRequest No: ' + entryRequestNo
+		const name = 'Name: ' + personal.name + '\nRequest : Entry' + '\nRequest No: ' + entryRequestNo
 		// send entry pass to security
 		if (image.includes('jpg'))
 			util.sendMessageWithPhoto(bot, security_id, image, name, button.security_enter_button)
-		util.sendMessage(bot, security_id, name, button.security_enter_button)
+		else util.sendMessage(bot, security_id, name, button.security_enter_button)
 	} catch (err) {
 		console.log(err)
 	}

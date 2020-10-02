@@ -123,8 +123,8 @@ module.exports = class ExitController {
 				} else {
 					const helpMessage = `
 *Entry/Exit pass Requesting Bot*
-/entry \`yyyy/mm/dd hh:mm am/pm\` - to get an entry pass
-/exit \`yyyy/mm/dd hh:mm am/pm\` - 	to get an exit pass
+/entry \`yyyy-mm-dd hh:mm am/pm  description of reason\` - to get an entry pass
+/exit \`yyyy-mm-dd hh:mm am/pm  description of reason\` - 	to get an exit pass
 `
 					this.bot.telegram.sendMessage(ctx.message.chat.id, helpMessage, {
 						parse_mode: 'markdown',

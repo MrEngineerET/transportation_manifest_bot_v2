@@ -18,19 +18,28 @@ module.exports = class EntryContoller {
 			try {
 				const sender = await util.senderInfo(ctx)
 				const time = util.parseTime(ctx)
-				if (time) {
+				const description = util.parseDescription(ctx)
+				if (time && description) {
 					// record a request entry in the request entry table
-					const entryRequestNo = await createEntryRequest(sender, time)
+					const entryRequestNo = await createEntryRequest(sender, time, description)
 					// send an entry request to the sender hod
-					await this.bot.telegram.sendMessage(
-						sender.hodId,
-						'Entry request from  ' + sender.name + '\nEntry request No: ' + entryRequestNo,
-						{
-							reply_markup: {
-								inline_keyboard: button.entry_request_button,
-							},
-						}
-					)
+					const message =
+						'Entry request from  ' +
+						sender.name +
+						'\nReason: ' +
+						description +
+						'\nEntry request No: ' +
+						entryRequestNo
+					const image = sender.image
+					if (image.includes('jpg'))
+						util.sendMessageWithPhoto(
+							this.bot,
+							sender.hodId,
+							image,
+							message,
+							button.entry_request_button
+						)
+					else util.sendMessage(this.bot, sender.hodId, message, button.entry_request_button)
 					// send an entry request confirmation to the sender
 					ctx.reply(
 						'Entry request has been sent to ' +
@@ -41,8 +50,8 @@ module.exports = class EntryContoller {
 				} else {
 					const helpMessage = `
 *Entry/Exit pass Requesting Bot*
-/entry \`yyyy/mm/dd hh:mm am/pm\` - to get an entry pass
-/exit \`yyyy/mm/dd hh:mm am/pm\` - 	to get an exit pass
+/entry \`yyyy-mm-dd hh:mm am/pm  description of reason\` - to get an entry pass
+/exit \`yyyy-mm-dd hh:mm am/pm  description of reason\` - 	to get an exit pass
 `
 					this.bot.telegram.sendMessage(ctx.message.chat.id, helpMessage, {
 						parse_mode: 'markdown',
@@ -91,16 +100,37 @@ module.exports = class EntryContoller {
 				)
 				if (entryrequestIndex != -1) {
 					const requester = entryRequestTable[entryrequestIndex].requestedBy
+					const description = entryRequestTable[entryrequestIndex].description
 					// send the request to the general manager
-					await this.bot.telegram.sendMessage(
-						gmId,
-						'Entry request from  ' + requester + '\nEntry request No: ' + entryRequestNo,
-						{
-							reply_markup: {
-								inline_keyboard: button.entry_request_button_to_GM,
-							},
-						}
-					)
+					// await this.bot.telegram.sendMessage(
+					// 	gmId,
+					// 	'Entry request from  ' + requester + '\nEntry request No: ' + entryRequestNo,
+					// 	{
+					// 		reply_markup: {
+					// 			inline_keyboard: button.entry_request_button_to_GM,
+					// 		},
+					// 	}
+					// )
+					//--------------------------------------
+					const message =
+						'Entry request from  ' +
+						requester +
+						'\nReason: ' +
+						description +
+						'\nEntry request No: ' +
+						entryRequestNo
+					const image = entryRequestTable[entryrequestIndex].image
+					if (image.includes('jpg'))
+						util.sendMessageWithPhoto(
+							this.bot,
+							requester,
+							image,
+							message,
+							button.entry_request_button_to_GM
+						)
+					else util.sendMessage(this.bot, requester, message, button.entry_request_button_to_GM)
+					//--------------------------------------
+
 					// signaling successful completion
 					ctx.deleteMessage()
 				}
@@ -167,7 +197,7 @@ module.exports = class EntryContoller {
 	}
 }
 
-async function createEntryRequest(sender, time) {
+async function createEntryRequest(sender, time, description) {
 	try {
 		return new Promise(async (resolve, reject) => {
 			// create a new entry request record
@@ -179,6 +209,7 @@ async function createEntryRequest(sender, time) {
 				requestedById: sender.id,
 				time,
 				reported: false,
+				description,
 			}
 			// open the entry request record table
 			const entryRequestTable = JSON.parse(await util.readFilePro(entryRequestTablePath))

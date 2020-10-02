@@ -3,7 +3,6 @@ const path = require('path')
 const nodemailer = require('nodemailer')
 
 const ObjectsToCsv = require('objects-to-csv')
-const gmEmail = 'meetbirukberhanu@gmail.com'
 
 const entryRequests = JSON.parse(
 	fs.readFileSync(path.join(__dirname, 'dev_data', 'entryRequest.json'))
@@ -105,14 +104,14 @@ module.exports = function reporter() {
 	const transporter = nodemailer.createTransport({
 		service: 'gmail',
 		auth: {
-			user: '',
-			pass: '',
+			user: process.env.email,
+			pass: process.env.pass,
 		},
 	})
 
 	const mailOptions = {
-		from: 'berukberhanu57@gmail.com',
-		to: 'meetbirukberhanu@gmail.com',
+		from: process.env.email,
+		to: process.env.gmEmail,
 		subject: 'Daily Transportation Manifest',
 		text: 'The attached csv files are the reports.',
 		attachments: [

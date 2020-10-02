@@ -72,9 +72,5 @@
 		"gmId": 1001163676779,
 		"role": "security"
 	},
-	{
-		"id": -464313130,
-		"name": "Wil Wheaton",
-		"role": "visitor"
-	}
+	{ "id": -464313130, "name": "Wil Wheaton", "role": "visitor" }
 ]

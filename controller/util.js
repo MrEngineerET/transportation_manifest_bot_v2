@@ -76,26 +76,23 @@ async function sendMessageWithPhoto(bot, chat_id, photo, caption, btn) {
 	} catch (err) {
 		console.log(err)
 	}
-
-	// await bot.telegram.sendPhoto(
-	// 	chatID,
-	// 	{ source: photo.location },
-	// 	{
-	// 		caption: prepareCaption(caption),
-	// 		reply_markup: {
-	// 			inline_keyboard: buttons,
-	// 		},
-	// 		parse_mode: 'HTML',
-	// 	}
-	// )
 }
 
 function parseTime(context) {
 	const input = context.message.text
-	let time = input.match(/\d{1,2}:\d{1,2} ?(am|pm)/g)
+	let time = input.match(/\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{1,2} ?(am|pm)/g)
 	if (time) {
 		time = time[0]
 		return time
+	} else {
+		return undefined
+	}
+}
+function parseDescription(context) {
+	const input = context.message.text
+	let match = /\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{1,2} ?(am|pm)\s+(.*)/.exec(input)
+	if (match[2]) {
+		return match[2]
 	} else {
 		return undefined
 	}
@@ -109,4 +106,5 @@ module.exports = {
 	sendMessage,
 	parseForRequestNo,
 	readFilePro,
+	parseDescription,
 }

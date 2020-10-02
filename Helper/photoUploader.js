@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 let imageName = ['sheldon.jpg', 'haward.jpg', 'leonard.jpg']
-let ids = [311770091, 32145, 12345]
+let ids = [-306751254, -368638041, -425282746]
 const personal = JSON.parse(
 	fs.readFileSync(path.join(__dirname, '..', 'dev_data', 'personal.json'))
 )

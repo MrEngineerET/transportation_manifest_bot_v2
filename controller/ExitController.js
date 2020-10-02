@@ -19,19 +19,39 @@ module.exports = class ExitController {
 			try {
 				const sender = await util.senderInfo(ctx)
 				const time = util.parseTime(ctx)
+				const description = util.parseDescription(ctx)
 				if (time) {
 					// record a request exit in the request exit table
-					const exitRequestNo = await createExitRequest(sender, time, false)
+					const exitRequestNo = await createExitRequest(sender, time, false, description)
 					// send an exit request to the sender hod
-					await this.bot.telegram.sendMessage(
-						sender.hodId,
-						'Exit request from  ' + sender.name + '\nExit request No: ' + exitRequestNo,
-						{
-							reply_markup: {
-								inline_keyboard: button.exit_request_button,
-							},
-						}
-					)
+					// await this.bot.telegram.sendMessage(
+					// 	sender.hodId,
+					// 	'Exit request from  ' + sender.name + '\nExit request No: ' + exitRequestNo,
+					// 	{
+					// 		reply_markup: {
+					// 			inline_keyboard: button.exit_request_button,
+					// 		},
+					// 	}
+					// )
+					//--------------------------------------
+					const message =
+						'Exit request from  ' +
+						sender.name +
+						'\nReason: ' +
+						description +
+						'\nExit request No: ' +
+						exitRequestNo
+					const image = sender.image
+					if (image.includes('jpg'))
+						util.sendMessageWithPhoto(
+							this.bot,
+							sender.hodId,
+							image,
+							message,
+							button.exit_request_button
+						)
+					else util.sendMessage(this.bot, sender.hodId, message, button.exit_request_button)
+					//--------------------------------------
 					// send an exit request confirmation to the sender
 					ctx.reply(
 						'Exit request has been sent to ' +
@@ -42,8 +62,8 @@ module.exports = class ExitController {
 				} else {
 					const helpMessage = `
 *Entry/Exit pass Requesting Bot*
-/entry \`yyyy/mm/dd hh:mm am/pm\` - to get an entry pass
-/exit \`yyyy/mm/dd hh:mm am/pm\` - 	to get an exit pass
+/entry \`yyyy-mm-dd hh:mm am/pm  description of reason\` - to get an entry pass
+/exit \`yyyy-mm-dd hh:mm am/pm  description of reason\` - 	to get an exit pass
 `
 					this.bot.telegram.sendMessage(ctx.from.id, helpMessage, {
 						parse_mode: 'markdown',
@@ -60,19 +80,39 @@ module.exports = class ExitController {
 			try {
 				const sender = await util.senderInfo(ctx)
 				const time = util.parseTime(ctx)
+				const description = util.parseDescription(ctx)
 				if (time) {
 					// record a request exit in the request exit table
-					const exitRequestNo = await createExitRequest(sender, time, true)
+					const exitRequestNo = await createExitRequest(sender, time, true, description)
 					// send an exit request to the sender hod
-					await this.bot.telegram.sendMessage(
-						sender.hodId,
-						'Exit request from  ' + sender.name + '\nExit request No: ' + exitRequestNo,
-						{
-							reply_markup: {
-								inline_keyboard: button.exit_request_button,
-							},
-						}
-					)
+					// await this.bot.telegram.sendMessage(
+					// 	sender.hodId,
+					// 	'Exit request from  ' + sender.name + '\nExit request No: ' + exitRequestNo,
+					// 	{
+					// 		reply_markup: {
+					// 			inline_keyboard: button.exit_request_button,
+					// 		},
+					// 	}
+					// )
+					//-----------------------------------------------------
+					const message =
+						'Exit request from  ' +
+						sender.name +
+						'\nReason: ' +
+						description +
+						'\nExit request No: ' +
+						exitRequestNo
+					const image = sender.image
+					if (image.includes('jpg'))
+						util.sendMessageWithPhoto(
+							this.bot,
+							sender.hodId,
+							image,
+							message,
+							button.exit_request_button
+						)
+					else util.sendMessage(this.bot, sender.hodId, message, button.exit_request_button)
+					//-----------------------------------------------------
 					// send an exit request confirmation to the sender
 					ctx.reply(
 						'Exit request has been sent to ' +
@@ -130,15 +170,34 @@ module.exports = class ExitController {
 				if (exitRequestIndex != -1) {
 					const requester = exitRequestTable[exitRequestIndex].requestedBy
 					// send the request to the general manager
-					await this.bot.telegram.sendMessage(
-						gmId,
-						'Exit request from  ' + requester + '\nExit request No: ' + exitRequestNo,
-						{
-							reply_markup: {
-								inline_keyboard: button.exit_request_button_to_GM,
-							},
-						}
-					)
+					// await this.bot.telegram.sendMessage(
+					// 	gmId,
+					// 	'Exit request from  ' + requester + '\nExit request No: ' + exitRequestNo,
+					// 	{
+					// 		reply_markup: {
+					// 			inline_keyboard: button.exit_request_button_to_GM,
+					// 		},
+					// 	}
+					// )
+					//----------------------------------------------------
+					const message =
+						'Exit request from  ' +
+						requester +
+						'\nReason: ' +
+						description +
+						'\nExit request No: ' +
+						exitRequestNo
+					const image = exitRequestTable[exitrequestIndex].image
+					if (image.includes('jpg'))
+						util.sendMessageWithPhoto(
+							this.bot,
+							requester,
+							image,
+							message,
+							button.exit_request_button_to_GM
+						)
+					else util.sendMessage(this.bot, requester, message, button.exit_request_button_to_GM)
+					//----------------------------------------------------
 					// signaling successful completion
 					ctx.deleteMessage()
 				}
@@ -216,6 +275,7 @@ async function createExitRequest(sender, time, transport) {
 				time,
 				transport,
 				reported: false,
+				description,
 			}
 			// open the exit request record table
 			const exitRequestTable = JSON.parse(await util.readFilePro(exitRequestTablePath))

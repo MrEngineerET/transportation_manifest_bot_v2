@@ -5,7 +5,7 @@ const shortid = require('shortid')
 const { Telegraf } = require('telegraf')
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
-const EntryController = require('./controller/EntryController')
+const EntryController = require('./controller/entryController')
 const ExitController = require('./controller/ExitController')
 
 // debbuging and to get the users chatID
@@ -18,17 +18,17 @@ const ExitController = require('./controller/ExitController')
 
 const helpMessage = `
 *Entry/Exit pass Requesting Bot*
-/entry \`yyyy/mm/dd hh:mm am/pm\` - to get an entry pass
-/exit \`yyyy/mm/dd hh:mm am/pm\` - 	to get an exit pass
+/entry \`yyyy-mm-dd hh:mm am/pm  description of reason\` - to get an entry pass
+/exit \`yyyy-mm-dd hh:mm am/pm  description of reason\` - 	to get an exit pass
 `
 
 bot.help(ctx => {
-	bot.telegram.sendMessage(ctx.from.id, helpMessage, {
+	bot.telegram.sendMessage(ctx.message.chat.id, helpMessage, {
 		parse_mode: 'markdown',
 	})
 })
 bot.start(ctx => {
-	bot.telegram.sendMessage(ctx.from.id, helpMessage, {
+	bot.telegram.sendMessage(ctx.message.chat.id, helpMessage, {
 		parse_mode: 'markdown',
 	})
 })

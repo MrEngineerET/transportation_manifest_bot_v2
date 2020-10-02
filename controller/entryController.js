@@ -123,12 +123,12 @@ module.exports = class EntryContoller {
 					if (image.includes('jpg'))
 						util.sendMessageWithPhoto(
 							this.bot,
-							requester,
+							gmId,
 							image,
 							message,
 							button.entry_request_button_to_GM
 						)
-					else util.sendMessage(this.bot, requester, message, button.entry_request_button_to_GM)
+					else util.sendMessage(this.bot, gmId, message, button.entry_request_button_to_GM)
 					//--------------------------------------
 
 					// signaling successful completion
@@ -210,6 +210,7 @@ async function createEntryRequest(sender, time, description) {
 				time,
 				reported: false,
 				description,
+				image: sender.image,
 			}
 			// open the entry request record table
 			const entryRequestTable = JSON.parse(await util.readFilePro(entryRequestTablePath))

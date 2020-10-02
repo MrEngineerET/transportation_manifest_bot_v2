@@ -91,7 +91,7 @@ function parseTime(context) {
 function parseDescription(context) {
 	const input = context.message.text
 	let match = /\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{1,2} ?(am|pm)\s+(.*)/.exec(input)
-	if (match[2]) {
+	if (match) {
 		return match[2]
 	} else {
 		return undefined

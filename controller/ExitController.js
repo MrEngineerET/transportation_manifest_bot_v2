@@ -65,7 +65,7 @@ module.exports = class ExitController {
 /entry \`yyyy-mm-dd hh:mm am/pm  description of reason\` - to get an entry pass
 /exit \`yyyy-mm-dd hh:mm am/pm  description of reason\` - 	to get an exit pass
 `
-					this.bot.telegram.sendMessage(ctx.from.id, helpMessage, {
+					this.bot.telegram.sendMessage(ctx.message.chat.id, helpMessage, {
 						parse_mode: 'markdown',
 					})
 				}
@@ -169,6 +169,7 @@ module.exports = class ExitController {
 				const exitRequestIndex = exitRequestTable.findIndex(exit => exit.requestNo == exitRequestNo)
 				if (exitRequestIndex != -1) {
 					const requester = exitRequestTable[exitRequestIndex].requestedBy
+					const description = exitRequestTable[exitRequestIndex].description
 					// send the request to the general manager
 					// await this.bot.telegram.sendMessage(
 					// 	gmId,
@@ -187,16 +188,16 @@ module.exports = class ExitController {
 						description +
 						'\nExit request No: ' +
 						exitRequestNo
-					const image = exitRequestTable[exitrequestIndex].image
+					const image = exitRequestTable[exitRequestIndex].image
 					if (image.includes('jpg'))
 						util.sendMessageWithPhoto(
 							this.bot,
-							requester,
+							gmId,
 							image,
 							message,
 							button.exit_request_button_to_GM
 						)
-					else util.sendMessage(this.bot, requester, message, button.exit_request_button_to_GM)
+					else util.sendMessage(this.bot, gmId, message, button.exit_request_button_to_GM)
 					//----------------------------------------------------
 					// signaling successful completion
 					ctx.deleteMessage()
@@ -263,7 +264,7 @@ module.exports = class ExitController {
 	}
 }
 
-async function createExitRequest(sender, time, transport) {
+async function createExitRequest(sender, time, transport, description) {
 	try {
 		return new Promise(async (resolve, reject) => {
 			// create a new exit request record
@@ -276,6 +277,7 @@ async function createExitRequest(sender, time, transport) {
 				transport,
 				reported: false,
 				description,
+				image: sender.image,
 			}
 			// open the exit request record table
 			const exitRequestTable = JSON.parse(await util.readFilePro(exitRequestTablePath))
